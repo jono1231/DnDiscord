@@ -95,7 +95,7 @@ discord.on('messageCreate', async msg => {
       }
     );
 
-    getRun(threadId, channel);
+    await getRun(threadId, channel);
   }
 
   // console.log(msg.channel.id + " " + msg.author.id)
