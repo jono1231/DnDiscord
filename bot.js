@@ -27,11 +27,10 @@ discord.on('messageCreate', async msg => {
 
   if (mquery.startsWith(`${process.env.CALL_SIGN}`)) {
     const user = discord.users.cache.get(msg.author.id);
-
     mquery = mquery.substring(1);
-    // Now we filter the type of message
-    if (mquery === "ping") {
-      msg.reply('Pong!');
+
+    if (mquery === "start" && mcontent === process.env.FLAG) {
+      // TODO: Give solved role when I can figure that out
     }
 
     if (mquery === "start") {
@@ -43,8 +42,6 @@ discord.on('messageCreate', async msg => {
           content : "Let's begin the adventure!"
         }
       );
-      msg.delete();
-
       // Start the challenge
       // Create the valid channel
       channel = msg.guild.channels.create({
@@ -77,8 +74,9 @@ discord.on('messageCreate', async msg => {
 
         fs.writeFile(LOG_FILE, `${user.id} ${userThread.id} ${channel.id}`, (err) => {if (err){ throw err }});
       });
-
     }
+
+    msg.delete();
   } else if (activeChannels.has(msg.channel.id) && activeThreads.has(msg.author.id)) {
     // Very "hacky" solution but fuck it we ball I guess
     // Check if the message was sent in an active channel
@@ -101,6 +99,13 @@ discord.on('messageCreate', async msg => {
   }
 
   // console.log(msg.channel.id + " " + msg.author.id)
+});
+
+// TODO: Give role on join when I can
+discord.on('guildMemberAdd', async member => {
+  console.log('User ' + member.user.username + 'has joined the server!') 
+  let role = member.guild.roles.cache.find(x => x.name == 'Adventurers'); 
+  member.roles.add(role)
 });
 
 async function getRun(thread_id, channel) {
