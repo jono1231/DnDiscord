@@ -52,7 +52,8 @@ discord.on('messageCreate', async msg => {
     msg.delete();
 
   } else if (activeChannels.has(user.id) &&
-              activeChannels.get(user.id) === msg.channel.id && activeThreads.has(user.id)) {
+              activeChannels.get(user.id) === msg.channel.id && activeThreads.has(user.id)
+              && msg.content.length() > 0) {
 
     // Very "hacky" solution but fuck it we ball I guess
     // Check if the message was sent in an active channel
@@ -114,7 +115,8 @@ async function start(msg, user) {
       },
     ],
   }).then(channel => {
-    channel.setRateLimitPerUser(5, "Don't fuck up");
+    // TODO: LOG THE CHANNEL CHANGE
+    channel.setRateLimitPerUser(10 /* To allow for gpt to generate a response */, "Don't fuck up");
     // console.log("Channel created");
     // Afterwards, get the Discord run used
     channel.send("Welcome! Please wait as we generate your adventure...");
@@ -128,6 +130,7 @@ async function start(msg, user) {
 }
 
 async function reset(user) {
+  // TODO: LOG THE RESET CHANGE
   id = user.id;
   if (activeThreads.has(user.id)) {
     channel = await discord.channels.fetch(activeChannels.get(user.id));
@@ -157,7 +160,13 @@ async function getRun(thread_id, cId) {
   const run = openai.beta.threads.runs.stream(thread_id, {
     assistant_id: ASSISTANT,
   })
-  .on('textDelta', (textDelta, snapshot) => {reply += textDelta.value}).on('end', () => channel.send(reply));
+  .on('textDelta', (textDelta, snapshot) => {
+    if (reply.length() + textDelta.value.length() >= 1950) {
+      channel.send(reply + "\n (cont'd)");
+      reply = "";
+    }
+    reply += textDelta.value
+  }).on('end', () => channel.send(reply));
 
 }
 
