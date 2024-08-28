@@ -22,23 +22,23 @@ discord.on('ready', () => {
 });
 
 discord.on('messageCreate', async msg => {
+  const user = discord.users.cache.get(msg.author.id);
   mquery = msg.content.substring(0, msg.content.indexOf(" ") !== -1 ? msg.content.indexOf(" ") : msg.content.length);
   mcontent = msg.content.indexOf(" ") !== -1 ? msg.content.substring(msg.content.indexOf(" ")).trim() : "";
 
   if (mquery.startsWith(`${process.env.CALL_SIGN}`)) {
-    const user = discord.users.cache.get(msg.author.id);
     mquery = mquery.substring(1);
 
     console.log(mquery + " " + mcontent);
 
     if (mquery === "solve" && mcontent === process.env.FLAG) {
       // TODO: Give solved role when I can figure that out
-      console.log(mcontent);
+      // console.log(mcontent);
       msg.reply("Congrats!");
     }
 
     if (mquery === "start") {
-      if (activeChannels.has(msg.author.id)) {
+      if (activeChannels.has(user.id)) {
         // TODO: Implement some error checking
       } else {
         await start(msg, user);
@@ -51,17 +51,17 @@ discord.on('messageCreate', async msg => {
 
     msg.delete();
 
-  } else if (activeChannels.has(msg.author.id) &&
-              activeChannels.get(msg.author.id).id === msg.channel.id && activeThreads.has(msg.author.id)) {
+  } else if (activeChannels.has(user.id) &&
+              activeChannels.get(user.id) === msg.channel.id && activeThreads.has(user.id)) {
+
     // Very "hacky" solution but fuck it we ball I guess
     // Check if the message was sent in an active channel
     // console.log(msg.channel.id + " " + msg.author.id);
-    // console.log("active channel detected. Generating a response");
-    channel = msg.channel;
+    console.log("active channel detected. Generating a response");
     // userIds should? be unique
-    userId = activeChannels.get(channel.id);
+    cId = activeChannels.get(user.id)
     // Get the thead id
-    threadId = activeThreads.get(userId);
+    threadId = activeThreads.get(user.id);
 
     const message = await openai.beta.threads.messages.create(threadId,
       {
@@ -70,7 +70,7 @@ discord.on('messageCreate', async msg => {
       }
     );
 
-    await getRun(threadId, channel);
+    await getRun(threadId, cId);
   }
 
   // console.log(msg.channel.id + " " + msg.author.id)
@@ -118,11 +118,11 @@ async function start(msg, user) {
     // console.log("Channel created");
     // Afterwards, get the Discord run used
     channel.send("Welcome! Please wait as we generate your adventure...");
-    getRun(userThread.id, channel);
+    getRun(userThread.id, channel.id);
 
     // Store the user's thread ID
     activeThreads.set(user.id , userThread.id);
-    activeChannels.set(user.id, channel);
+    activeChannels.set(user.id, channel.id);
     // console.log("Stored " + channel.id + " " + user.id);
   });
 }
@@ -142,19 +142,22 @@ async function reset(user) {
       }
     );
 
-    getRun(userThread.id, channel);
+    getRun(userThread.id, channel.id);
 
     activeThreads.set(user.id , userThread.id);
   }
 }
 
-async function getRun(thread_id, channel) {
+async function getRun(thread_id, cId) {
+  const channel = await discord.channels.fetch(cId)
+  // console.log(channel);
   // Can't have it reply by username because it breaks the whole AI for no fucking reason
   let reply = "";
   const run = openai.beta.threads.runs.stream(thread_id, {
     assistant_id: ASSISTANT,
   })
   .on('textDelta', (textDelta, snapshot) => {reply += textDelta.value}).on('end', () => channel.send(reply));
+
 }
 
 //this line must be at the very end
