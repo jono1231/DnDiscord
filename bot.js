@@ -130,7 +130,7 @@ async function start(msg, user) {
 async function reset(user) {
   id = user.id;
   if (activeThreads.has(user.id)) {
-    channel = activeChannels.get(user.id);
+    channel = await discord.channels.fetch(activeChannels.get(user.id));
     
     channel.send("Resetting the adventure... Please wait");
 
@@ -152,6 +152,7 @@ async function getRun(thread_id, cId) {
   const channel = await discord.channels.fetch(cId)
   // console.log(channel);
   // Can't have it reply by username because it breaks the whole AI for no fucking reason
+  // TODO: 2000 CHARACTER LIMIT CHECK
   let reply = "";
   const run = openai.beta.threads.runs.stream(thread_id, {
     assistant_id: ASSISTANT,
