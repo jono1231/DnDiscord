@@ -53,7 +53,7 @@ discord.on('messageCreate', async msg => {
 
   } else if (activeChannels.has(user.id) &&
               activeChannels.get(user.id) === msg.channel.id && activeThreads.has(user.id)
-              && msg.content.length() > 0) {
+              && msg.content.length > 0) {
 
     // Very "hacky" solution but fuck it we ball I guess
     // Check if the message was sent in an active channel
@@ -161,7 +161,7 @@ async function getRun(thread_id, cId) {
     assistant_id: ASSISTANT,
   })
   .on('textDelta', (textDelta, snapshot) => {
-    if (reply.length() + textDelta.value.length() >= 1950) {
+    if (reply.length + textDelta.value.length >= 1950) {
       channel.send(reply + "\n (cont'd)");
       reply = "";
     }
