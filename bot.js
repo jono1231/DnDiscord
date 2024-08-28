@@ -29,12 +29,12 @@ discord.on('messageCreate', async msg => {
   if (mquery.startsWith(`${process.env.CALL_SIGN}`)) {
     mquery = mquery.substring(1);
 
-    console.log(mquery + " " + mcontent);
+    // console.log(mquery + " " + mcontent);
 
     if (mquery === "solve" && mcontent === process.env.FLAG) {
       // TODO: Give solved role when I can figure that out
       // console.log(mcontent);
-      msg.reply("Congrats!");
+      msg.channel.send("Congrats!");
     }
 
     if (mquery === "start") {
